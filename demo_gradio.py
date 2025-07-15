@@ -27,11 +27,11 @@ from vggt.utils.geometry import unproject_depth_map_to_point_map
 device = "cuda" if torch.cuda.is_available() else "cpu"
 
 print("Initializing and loading VGGT model...")
-# model = VGGT.from_pretrained("facebook/VGGT-1B")  # another way to load the model
+model = VGGT.from_pretrained("facebook/VGGT-1B")  # another way to load the model
 
-model = VGGT()
-_URL = "https://huggingface.co/facebook/VGGT-1B/resolve/main/model.pt"
-model.load_state_dict(torch.hub.load_state_dict_from_url(_URL))
+# model = VGGT()
+# _URL = "https://huggingface.co/facebook/VGGT-1B/resolve/main/model.pt"
+# model.load_state_dict(torch.hub.load_state_dict_from_url(_URL))
 
 
 model.eval()

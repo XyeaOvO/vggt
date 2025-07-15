@@ -24,7 +24,7 @@ try:
 except ImportError:
     print("onnxruntime not found. Sky segmentation may not work.")
 
-from visual_util import segment_sky, download_file_from_url
+from vggt.test.visual_util import segment_sky, download_file_from_url
 from vggt.models.vggt import VGGT
 from vggt.utils.load_fn import load_and_preprocess_images
 from vggt.utils.geometry import closed_form_inverse_se3, unproject_depth_map_to_point_map
