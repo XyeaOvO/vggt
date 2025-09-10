@@ -51,6 +51,37 @@ class VGGT(nn.Module, PyTorchModelHubMixin):
                 - vis (torch.Tensor): Visibility scores for tracked points with shape [B, S, N]
                 - conf (torch.Tensor): Confidence scores for tracked points with shape [B, S, N]
         """        
+        """
+        中文：
+        前向传播VGGT模型。
+        
+        参数：
+            images (torch.Tensor): 输入图像，形状为[S, 3, H, W]或[B, S, 3, H, W]，范围为[0, 1]。
+                B: 批量大小, S: 序列长度, 3: RGB通道, H: 高度, W: 宽度
+            query_points (torch.Tensor, optional): 查询点，用于跟踪，像素坐标。
+                Shape: [N, 2]或[B, N, 2]，其中N是查询点的数量。
+                默认：None
+
+        返回：
+            dict: 包含以下预测的词典：
+                - pose_enc (torch.Tensor): 相机位姿编码，形状为[B, S, 9]（来自最后一个迭代）
+                - depth (torch.Tensor): 预测的深度图，形状为[B, S, H, W, 1]
+                - depth_conf (torch.Tensor): 深度图的置信度得分，形状为[B, S, H, W]
+                - world_points (torch.Tensor): 每个像素的3D世界坐标，形状为[B, S, H, W, 3]
+                - world_points_conf (torch.Tensor): 世界坐标的置信度得分，形状为[B, S, H, W]
+                - images (torch.Tensor): 原始输入图像，用于可视化
+
+                如果提供了query_points，还包括：
+                - track (torch.Tensor): 点跟踪，形状为[B, S, N, 2]（来自最后一个迭代），像素坐标
+                - vis (torch.Tensor): 跟踪点的可见性得分，形状为[B, S, N]
+                - conf (torch.Tensor): 跟踪点的置信度得分，形状为[B, S, N]
+
+        注意：
+            1. 如果输入图像没有批次维度，则添加一个批次维度。
+            2. 如果提供了query_points，则需要确保其形状正确。
+            3. 返回的词典包含所有预测结果，包括相机位姿、深度、世界坐标等。
+            4. 如果query_points为None，则不进行跟踪预测。
+        """
         # If without batch dimension, add it
         if len(images.shape) == 4:
             images = images.unsqueeze(0)
@@ -59,7 +90,7 @@ class VGGT(nn.Module, PyTorchModelHubMixin):
             query_points = query_points.unsqueeze(0)
 
         aggregated_tokens_list, patch_start_idx = self.aggregator(images)
-
+        # 得到aggregated_tokens_list的形状为len(aggregated_tokens_list)=24, 每个元素的形状为[B, S, P, 2C=2048]
         predictions = {}
 
         with torch.cuda.amp.autocast(enabled=False):

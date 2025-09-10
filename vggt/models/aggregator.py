@@ -48,7 +48,31 @@ class Aggregator(nn.Module):
         rope_freq (int): Base frequency for rotary embedding. -1 to disable.
         init_values (float): Init scale for layer scale.
     """
+    """
+    中文：
+    聚合器应用交替注意力，如VGGT所述。
 
+    记住设置model.train()以启用梯度检查点以减少内存使用。
+    
+    参数：
+        img_size (int): 图像大小（像素）。
+        patch_size (int): PatchEmbed的每个patch大小。
+        embed_dim (int): 标记嵌入的维度。
+        depth (int): 块数。
+        num_heads (int): 注意力头数。
+        mlp_ratio (float): MLP隐藏维度与嵌入维度的比率。
+        num_register_tokens (int): 注册标记数。
+        block_fn (nn.Module): 用于注意力（默认Block）的块类型。
+        qkv_bias (bool): 是否在QKV投影中包含偏置。
+        proj_bias (bool): 是否在输出投影中包含偏置。
+        ffn_bias (bool): 是否在MLP层中包含偏置。
+        patch_embed (str): 补丁嵌入类型。例如，"conv"或"dinov2_vitl14_reg"。
+        aa_order (list[str]): 交替注意力的顺序。例如，["frame", "global"]。
+        aa_block_size (int): 每个注意力类型前要分组的块数。如果不需要，设置为1。
+        qk_norm (bool): 是否应用QK归一化。
+        rope_freq (int): 旋转嵌入的基频率。-1表示禁用。
+        init_values (float): 层缩放的初始值。
+    """
     def __init__(
         self,
         img_size=518,
@@ -203,6 +227,7 @@ class Aggregator(nn.Module):
         # Reshape to [B*S, C, H, W] for patch embedding
         images = images.view(B * S, C_in, H, W)
         patch_tokens = self.patch_embed(images)
+        # 得到patch_tokens的形状为[B*S, P=H*W/196, C=1024]
 
         if isinstance(patch_tokens, dict):
             patch_tokens = patch_tokens["x_norm_patchtokens"]
@@ -219,6 +244,7 @@ class Aggregator(nn.Module):
         pos = None
         if self.rope is not None:
             pos = self.position_getter(B * S, H // self.patch_size, W // self.patch_size, device=images.device)
+        # 得到pos的形状为[B*S, P, 2]
 
         if self.patch_start_idx > 0:
             # do not use position embedding for special tokens (camera and register tokens)
@@ -229,6 +255,7 @@ class Aggregator(nn.Module):
 
         # update P because we added special tokens
         _, P, C = tokens.shape
+        # 得到tokens的形状为[B*S, raw_P+1+4, C=1024]
 
         frame_idx = 0
         global_idx = 0
@@ -250,6 +277,7 @@ class Aggregator(nn.Module):
             for i in range(len(frame_intermediates)):
                 # concat frame and global intermediates, [B x S x P x 2C]
                 concat_inter = torch.cat([frame_intermediates[i], global_intermediates[i]], dim=-1)
+                # 得到concat_inter的形状为[B, S, P, 2C=2048]
                 output_list.append(concat_inter)
 
         del concat_inter

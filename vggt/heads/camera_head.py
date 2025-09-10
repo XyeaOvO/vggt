@@ -22,6 +22,11 @@ class CameraHead(nn.Module):
 
     It applies a series of transformer blocks (the "trunk") to dedicated camera tokens.
     """
+    """
+    中文：
+    相机头从标记表示中预测相机参数，使用迭代细化。
+    它将一系列变换块（“trunk”）应用于专用的相机标记。
+    """
 
     def __init__(
         self,
@@ -87,6 +92,7 @@ class CameraHead(nn.Module):
 
         # Extract the camera tokens
         pose_tokens = tokens[:, :, 0]
+        # 得到pose_tokens的形状为[B, S, C=1024]
         pose_tokens = self.token_norm(pose_tokens)
 
         pred_pose_enc_list = self.trunk_fn(pose_tokens, num_iterations)
@@ -110,6 +116,7 @@ class CameraHead(nn.Module):
         for _ in range(num_iterations):
             # Use a learned empty pose for the first iteration.
             if pred_pose_enc is None:
+                #empty_pose_tokens的形状为[1, 1, 9]
                 module_input = self.embed_pose(self.empty_pose_tokens.expand(B, S, -1))
             else:
                 # Detach the previous prediction to avoid backprop through time.
@@ -124,9 +131,10 @@ class CameraHead(nn.Module):
             pose_tokens_modulated = pose_tokens_modulated + pose_tokens
 
             pose_tokens_modulated = self.trunk(pose_tokens_modulated)
+            # 得到pose_tokens_modulated的形状为[B, S, C=1024]
             # Compute the delta update for the pose encoding.
             pred_pose_enc_delta = self.pose_branch(self.trunk_norm(pose_tokens_modulated))
-
+            # 得到pred_pose_enc_delta的形状为[B, S, 9]
             if pred_pose_enc is None:
                 pred_pose_enc = pred_pose_enc_delta
             else:

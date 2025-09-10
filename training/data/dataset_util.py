@@ -11,6 +11,7 @@ import math
 import numpy as np
 from PIL import Image
 import PIL
+from typing import Tuple
 try:
     lanczos = PIL.Image.Resampling.LANCZOS
     bicubic = PIL.Image.Resampling.BICUBIC
