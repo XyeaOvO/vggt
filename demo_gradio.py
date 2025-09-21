@@ -16,6 +16,9 @@ import glob
 import gc
 import time
 
+from PIL import Image
+from torchvision import transforms
+
 sys.path.append("vggt/")
 
 from visual_util import predictions_to_glb
@@ -62,8 +65,8 @@ def run_model(target_dir, model) -> dict:
     print(f"Found {len(image_names)} images")
     if len(image_names) == 0:
         raise ValueError("No images found. Check your upload.")
-
     images = load_and_preprocess_images(image_names).to(device)
+    # images = torch.stack([transforms.ToTensor()(Image.open(image_name)) for image_name in image_names]).to(device)
     print(f"Preprocessed images shape: {images.shape}")
 
     # Run inference
@@ -76,6 +79,7 @@ def run_model(target_dir, model) -> dict:
 
     # Convert pose encoding to extrinsic and intrinsic matrices
     print("Converting pose encoding to extrinsic and intrinsic matrices...")
+    print(f"Pose enc shape: {predictions['pose_enc'].shape}")
     extrinsic, intrinsic = pose_encoding_to_extri_intri(predictions["pose_enc"], images.shape[-2:])
     predictions["extrinsic"] = extrinsic
     predictions["intrinsic"] = intrinsic
@@ -88,7 +92,10 @@ def run_model(target_dir, model) -> dict:
 
     # Generate world points from depth map
     print("Computing world points from depth map...")
-    depth_map = predictions["depth"]  # (S, H, W, 1)
+    depth_map = predictions["depth"]  # (B, S, H, W, 1)
+    print(f"Depth map shape: {depth_map.shape}")
+    print(f"Extrinsic shape: {predictions['extrinsic'].shape}")
+    print(f"Intrinsic shape: {predictions['intrinsic'].shape}")
     world_points = unproject_depth_map_to_point_map(depth_map, predictions["extrinsic"], predictions["intrinsic"])
     predictions["world_points_from_depth"] = world_points
 
