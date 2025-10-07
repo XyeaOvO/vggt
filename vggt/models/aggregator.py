@@ -166,15 +166,15 @@ class Aggregator(nn.Module):
 
     def __build_patch_embed__(
         self,
-        patch_embed,
-        img_size,
-        patch_size,
-        num_register_tokens,
+        patch_embed,#
+        img_size,#
+        patch_size,#
+        num_register_tokens,#
         interpolate_antialias=True,
         interpolate_offset=0.0,
-        block_chunks=0,
-        init_values=1.0,
-        embed_dim=1024,
+        block_chunks=0, 
+        init_values=1.0, 
+        embed_dim=1024,#
     ):
         """
         Build the patch embed layer. If 'conv', we use a
@@ -192,9 +192,9 @@ class Aggregator(nn.Module):
             }
 
             self.patch_embed = vit_models[patch_embed](
-                img_size=img_size,
-                patch_size=patch_size,
-                num_register_tokens=num_register_tokens,
+                img_size=img_size,#
+                patch_size=patch_size,#
+                num_register_tokens=num_register_tokens,#
                 interpolate_antialias=interpolate_antialias,
                 interpolate_offset=interpolate_offset,
                 block_chunks=block_chunks,
@@ -222,17 +222,18 @@ class Aggregator(nn.Module):
             raise ValueError(f"Expected 3 input channels, got {C_in}")
 
         # Normalize images and reshape for patch embed
-        images = (images - self._resnet_mean) / self._resnet_std
+        images = (images - self._resnet_mean) / self._resnet_std #*
 
         # Reshape to [B*S, C, H, W] for patch embedding
         images = images.view(B * S, C_in, H, W)
-        patch_tokens = self.patch_embed(images)
-        # 得到patch_tokens的形状为[B*S, P=H*W/196, C=1024]
+        patch_tokens = self.patch_embed(images) #*
+        # print(patch_tokens)
 
-        if isinstance(patch_tokens, dict):
+        if isinstance(patch_tokens, dict): #*
             patch_tokens = patch_tokens["x_norm_patchtokens"]
 
-        _, P, C = patch_tokens.shape
+        # 得到patch_tokens的形状为[B*S, P=H*W/196, C=1024]
+        _, P, C = patch_tokens.shape #*
 
         # Expand camera and register tokens to match batch size and sequence length
         camera_token = slice_expand_and_flatten(self.camera_token, B, S)
