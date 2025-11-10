@@ -104,7 +104,7 @@ def pose_encoding_to_extri_intri(
         quat = pose_encoding[..., 3:7]
         fov_h = pose_encoding[..., 7]
         fov_w = pose_encoding[..., 8]
-
+        print(f"fov_h: {fov_h * 180 / torch.pi}, deg, fov_w: {fov_w * 180 / torch.pi}")
         R = quat_to_mat(quat)
         extrinsics = torch.cat([R, T[..., None]], dim=-1)
 
